@@ -1,0 +1,197 @@
+﻿{% extends "index.html" %}
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+      <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Free Bootstrap Admin Template : Dream</title>
+	<!-- Bootstrap Styles-->
+    <link href="/static/css/bootstrap.css" rel="stylesheet" />
+     <!-- FontAwesome Styles-->
+    <link href="/static/css/font-awesome.css" rel="stylesheet" />
+        <!-- Custom Styles-->
+    <link href="/static/css/custom-styles.css" rel="stylesheet" />
+     <!-- Google Fonts-->
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css' />
+    <link rel="stylesheet" type="text/css" href="/static/css/ladda-themeless.css" />
+    <link rel="stylesheet" type="text/css" href="/static/css/gbtags.css" />
+</head>
+{% block content %}
+    <div id="wrapper">
+        <!-- /. NAV SIDE  -->
+        <div id="page-wrapper" >
+            <div id="page-inner">
+			 <div class="row">
+                    <div class="col-md-12">
+                        <h4 class="page-header">
+                            单量发布代码
+                        </h4>
+                    </div>
+                </div> 
+                 <!-- /. ROW  -->
+                                 
+            <div class="row">
+                <div class="col-md-12 col-sm-12">
+                    <div class="panel panel-default">
+                        <div class="panel-heading" id='head'>
+                            选择项目:{{HostForm.project}}
+                        </div>
+                        <div class="panel-body" id='hosts' style='display:none'>
+                        </div>
+                    </div>
+                </div>
+	   </div>
+	   <div class="row">
+                <div class="col-md-12 col-sm-12">
+                    <div class="panel panel-default">
+                        <div class="panel-heading" id='head_file' style='display:none'>
+                            选择要上传的文件:
+                        </div>
+                        <div class="panel-body" id='files' style='display:none'>
+                        </div>
+                    </div>
+                </div>
+           </div>
+            <div class="row show_result" style='display:none;'>
+                <div class="col-md-offset-2 col-md-8 col-md-offset-2 col-sm-offset-2 col-sm-8 col-sm-offset-2">
+                    <div class="well well-lg" id='result' style='width:730px;height:300px;;overflow:auto;margin:0 auto;' >
+                    </div>
+                </div>
+            </div>
+	   </div>
+          </div>
+        </div>
+
+    {% block bottom_js %}
+    	<script src="/static/js/jquery-1.10.2.js"></script>
+	<script type="text/javascript" src="/static/js/jquery.jribbble.min.js"></script>
+	<script src="/static/js/bootstrap.min.js"></script>	
+	<script src="/static/js/spin.js"></script>	
+	<script src="/static/js/ladda.js"></script>	
+	<script src="/static/js/respond.min.js"></script>
+	<script>
+		function CheckResult(obj){
+			var ip_list=new Array();
+			var file_list=new Array();
+                        var id=$('#head').find('select').val();
+			var l=Ladda.create(obj)
+			$('#select_list').find('input:checkbox').each(function(){
+                                if($(this).prop('checked')){
+                                        ip_list.push($(this).val());
+                                }
+                        })
+			$('#file_list').find('input:checkbox').each(function(){
+                                if($(this).prop('checked')){
+                                        file_list.push($(this).val());
+                                }
+                        })
+			if(ip_list.length==0){
+				alert('请先选择需要校验的服务器!');
+				return;
+			} else if(file_list.length==0) {
+                                alert('请先选择需要校验的文件!');
+                                return;
+                        } else {
+				l.start();
+				$(obj).val('校验中....');	
+			}
+			$.ajax({
+                                type:'post',
+                                url:'/megatron/check_result/',
+                                tradition:true,
+                                data:{'id':id,'ip_list':JSON.stringify(ip_list),'file_list':JSON.stringify(file_list),'csrfmiddlewaretoken':'{{ csrf_token }}'},
+                                success:function(ret){
+                                                if($.trim(ret).length!=0){
+                                                        l.stop();
+                                                        $(obj).val('校验结果');
+                                                        alert('校验完成!');
+                                                        $('#result').html(ret);
+                                                }
+                                        }
+                        })
+		}
+		function PublishCode(obj){
+			var ip_list=new Array();
+			var file_list=new Array();
+			var id=$('#head').find('select').val();
+			var l=Ladda.create(obj);
+			$('#select_list').find('input:checkbox').each(function(){
+				if($(this).prop('checked')){
+					ip_list.push($(this).val());
+				}
+			})
+			$('#file_list').find('input:checkbox').each(function(){
+                                if($(this).prop('checked')){
+                                        file_list.push($(this).val());
+                                }
+                        })
+			if(ip_list.length==0){
+				alert('请先选择需要上传的服务器!');
+				return;
+			} else if(file_list.length==0) {
+				alert('请先选择需要上传的文件!');
+                                return;
+			} else{
+				if(confirm('你确定要发布该文件到该项目中吗')){
+					l.start();
+					$(obj).val('发布中....');
+				}
+			}	
+			$.ajax({
+				type:'post',
+				url:'/megatron/SinglePublishing/',
+				tradition:true,
+				data:{'id':id,'ip_list':JSON.stringify(ip_list),'file_list':JSON.stringify(file_list),'csrfmiddlewaretoken':'{{ csrf_token }}'},
+				success:function(ret){
+						if($.trim(ret).length!=0){
+							l.stop();
+							$(obj).val('发布代码');
+							alert('发布完成!');
+							$('.show_result').css('display','block');
+							$('#result').html(ret);
+						}
+					}
+			})
+		}
+		function SelectAll(){
+			$('#select_list').find('input:checkbox').prop('checked',true);
+		}
+		function Reverse(){
+			$('#select_list').find('input:checkbox').each(function(){
+				if($(this).prop('checked')){
+					$(this).prop('checked',false);
+				} else {
+					$(this).prop('checked',true);
+				}
+			});
+		}
+		function Cancel(){
+			$('#select_list').find('input:checkbox').prop('checked',false);
+		}
+		$('#head').find('select').removeAttr('onblur');
+		$('#head').find('select').change(function(){
+			var id=$(this).find('option:selected').val();
+			$.ajax({
+				type:'get',
+				url:'/megatron/SinglePublishing/',
+				data:{'id':id,'csrfmiddlewaretoken':'{{ csrf_token }}'},
+				success:function(data){
+						//console.log($.parseJSON(data));
+						//console.log($.type($.parseJSON(data)));
+						if (data.length!=0){
+							data=$.parseJSON(data);
+							file_data=data[0];
+							host_data=data[1];
+							$('#hosts').css('display','block');
+							$('#hosts').html(host_data);
+							$('#head_file').css('display','block');
+							$('#files').css('display','block');
+                                                	$('#files').html(file_data);
+						}
+					},
+			})
+		})
+	</script>
+    {% endblock %}
+{% endblock %}
+</html>

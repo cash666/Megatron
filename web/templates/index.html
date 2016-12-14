@@ -1,0 +1,258 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Megatron发布系统</title>
+    <!-- Bootstrap Styles-->
+    <link href="/static/css/bootstrap.css" type='text/css' rel="stylesheet" />
+    <!-- FontAwesome Styles-->
+    <link href="/static/css/font-awesome.css" type='text/css' rel="stylesheet" />
+    <!-- Morris Chart Styles-->
+    <!-- Custom Styles-->
+    <link href="/static/css/custom-styles.css" type='text/css' rel="stylesheet" />
+    <!-- Google Fonts-->
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css' />
+    {% block header_css %}
+	<link href="/static/js/morris/morris-0.4.3.min.css" type='text/css' rel="stylesheet" />
+    {% endblock %}
+</head>
+
+<body>
+    <div id="wrapper">
+        <nav class="navbar navbar-default top-navbar" role="navigation">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".sidebar-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="index.html">Megatron</a>
+            </div>
+            <ul class="nav navbar-top-links navbar-right">
+                <!-- /.dropdown -->
+		{% if request.user.is_authenticated %}
+                <li class="dropdown">
+                    <a class="dropdown-toggle" data-toggle="dropdown" href="#" aria-expanded="false">
+                        欢迎你,{{request.user.userinfo.user}}&nbsp;&nbsp;<i class="fa fa-user fa-fw"></i> <i class="fa fa-caret-down"></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-user">
+			<li><a href="/megatron/change_passwd/"><i class="fa fa-edit"></i>修改密码</a>
+                        </li>
+                        <li><a href="/megatron/acc_logout/"><i class="fa fa-sign-out fa-fw"></i>退出</a>
+                        </li>
+                    </ul>
+		{% else %}
+		    <li><a href='/'>登录</a></li>
+		{% endif %}
+                    <!-- /.dropdown-user -->
+                </li>
+                <!-- /.dropdown -->
+            </ul>
+        </nav>
+        <!--/. NAV TOP  -->
+        <nav class="navbar-default navbar-side" role="navigation">
+            <div class="sidebar-collapse">
+                <ul class="nav" id="main-menu">
+                    <li>
+                        <a href="/megatron/index"><i class="fa fa-dashboard"></i>控制台</a>
+                    </li>
+		    {% if perms.web.add_project %}
+                    <li>
+                        <a href="/megatron/project"><i class="fa fa-desktop"></i>项目管理</a>
+                    </li>
+		    {% endif %}
+		    {% if perms.web.add_host %}
+		    <li>
+                        <a href="/megatron/host"><i class="fa fa-bar-chart-o"></i>主机管理</a>
+                    </li>
+		    {% endif %}
+                    <li>
+                        <a href="#"><i class="fa fa-sitemap"></i>代码发布<span class="fa arrow"></span></a>
+                        <ul class="nav nav-second-level">
+                            <li>
+                                <a href="/megatron/BatchPublishing"><i class="fa fa-qrcode"></i>批量发布</a>
+                            </li>
+                            <li>
+                                <a href="/megatron/SinglePublishing"><i class="fa fa-qrcode"></i>单量发布</a>
+                            </li>
+                        </ul>
+                    </li>
+		    {% if perms.web.add_loginfo %}
+		    <li>
+                        <a href="/megatron/log"><i class="fa fa-table"></i>日志审计</a>
+                    </li>
+		    {% endif %}
+                </ul>
+
+            </div>
+
+        </nav>
+        <!-- /. NAV SIDE  -->
+	{% block content %}
+        <div id="page-wrapper">
+            <div id="page-inner">
+                <div class="row">
+                    <div class="col-md-12">
+                        <h3 class="page-header">
+                            控制台
+                        </h3>
+                    </div>
+                </div>
+                <!-- /. ROW  -->
+
+                <div class="row">
+                    <div class="col-md-3 col-sm-12 col-xs-12">
+                        <div class="panel panel-primary text-center no-boder bg-color-green">
+                            <div class="panel-body">
+                                <i class="fa fa-bar-chart-o fa-5x"></i>
+                                <h3><a href='/megatron/project/'>{{project_count}}</a></h3>
+                            </div>
+                            <div class="panel-footer back-footer-green">
+                            	项目数    
+                            </div>
+                        </div>
+                    </div>
+		    <div class="col-md-3 col-sm-12 col-xs-12">
+                        <div class="panel panel-primary text-center no-boder bg-color-green">
+                            <div class="panel-body">
+                                <i class="fa fa-tasks fa-5x"></i>
+                                <h3><a href='/megatron/host/'>{{host_count}}</a></h3>
+                            </div>
+                            <div class="panel-footer back-footer-green">
+                                主机数
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12 col-sm-12 col-xs-12">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                最近七天代码发布统计图
+                            </div>
+                            <div class="panel-body">
+                                <div id="container" style="min-width:400px;height:400px"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- /. ROW  -->
+
+                <div class="row">
+                    <div class="col-md-12 col-sm-12 col-xs-12">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                最近的项目代码发布情况
+                            </div> 
+                            <div class="panel-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-bordered table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>序号</th>
+                                                <th>项目</th>
+                                                <th>发布人</th>
+                                                <th>发布类型</th>
+                                                <th>发布时间</th>
+                                            </tr>
+                                        </thead>
+					{% for item in publish_obj %}
+                                        <tbody>
+                                            <tr>
+                                                <td>{{forloop.counter}}</td>
+                                                <td>{{item.project_name}}</td>
+                                                <td>{{item.operate_name}}</td>
+                                                <td>{{item.operate_type}}</td>
+                                                <td>{{item.public_time|date:"Y-m-d H:i:s"}}</td>
+                                            </tr>
+                                        </tbody>
+					{% endfor %}
+                                    </table>
+                                </div>
+				<div class="text-right">
+                                    <a href="/megatron/log">more<i class="fa fa-arrow-circle-right"></i></a>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <!-- /. ROW  -->
+            </div>
+            <!-- /. PAGE INNER  -->
+        </div>
+        <!-- /. PAGE WRAPPER  -->
+    </div>
+    {% endblock %}
+    <script src="/static/js/jquery-1.10.2.js"></script>
+    <!-- Bootstrap Js -->
+    <script src="/static/js/bootstrap.min.js"></script>
+    <!-- Metis Menu Js -->
+    <script src="/static/js/jquery.metisMenu.js"></script>
+    <!-- Morris Chart Js -->
+    <!-- Custom Js -->
+    <script src="/static/js/custom-scripts.js"></script>
+    <script src="/static/js/morris/raphael-2.1.0.min.js"></script>
+    <script src="/static/js/morris/morris.js"></script>
+    <script src="/static/js/highcharts.js"></script>
+    <script src="/static/js/exporting.js"></script>
+    <script src="/static/js/sand-signika.js"></script>
+    <script>
+           function GetDateStr(AddDayCount) { 
+                var dd = new Date(); 
+                dd.setDate(dd.getDate()+AddDayCount);//获取AddDayCount天后的日期 
+                var m = dd.getMonth()+1;//获取当前月份的日期 
+                var d = dd.getDate(); 
+                return m+"-"+d; 
+           }
+           
+           var series_arr={{ json_series|safe }};
+           ShowCharts(series_arr);
+           function ShowCharts(series_arr){
+                $('#container').highcharts({
+                        title: {
+                            text: '最近7天各项目代码发布统计折线图',
+                            x: -20 //center
+                        },
+                        subtitle: {
+                            text: 'Source: caoshuai.com',
+                            x: -20
+                        },
+                        xAxis: {
+                            categories: [GetDateStr(-6),GetDateStr(-5),GetDateStr(-4),GetDateStr(-3),GetDateStr(-2),GetDateStr(-1),GetDateStr(0)]
+                        },
+                        yAxis: {
+                            title: {
+                                text: 'Count(次数)'
+                            },
+                            plotLines: [{
+                                value: 0,
+                                width: 1,
+                                color: '#808080'
+                            }]
+                        },
+                        tooltip: {
+                            valueSuffix: '次'
+                        },
+                        legend: {
+                            layout: 'vertical',
+                            align: 'right',
+                            verticalAlign: 'middle',
+                            borderWidth: 0
+                        },
+                        series:series_arr,
+                });
+            }
+    </script>
+    {% block bottom_js %}
+	<script>
+	</script>
+    {% endblock %}
+
+
+</body>
+
+</html>
